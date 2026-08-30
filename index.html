@@ -801,6 +801,7 @@ document.getElementById('changePinBtn').addEventListener('click', () => {
 
 /* ---------- Поделиться сметой ---------- */
 function buildShareText(){
+  const t = window.__calcTotals || { productsTotal: 0, installCostTotal: 0, measureCost: 0, deliveryCost: 0, totalCost: 0 };
   const lines = [];
   lines.push('Смета · камень');
   lines.push('');
@@ -809,18 +810,16 @@ function buildShareText(){
     lines.push(`${idx + 1}. ${it.name}: ${it.length || 0}×${it.width || 0} мм, толщ. ${it.thickness || 0} мм, ${it.qty || 1} шт — ${area} м²`);
   });
   lines.push('');
-  lines.push(`Материал: ${document.getElementById('materialCostRow').textContent}`);
-  lines.push(`Доп. расходы к материалу: ${document.getElementById('extraMaterialCostRow').textContent}`);
-  lines.push(`Работа: ${document.getElementById('laborCostRow').textContent}`);
-  lines.push(`Клей (с наценкой): ${document.getElementById('glueCostRow').textContent}`);
-  if(installEnabled){ lines.push(`Монтаж: ${document.getElementById('installCostRowSummary').textContent}`); }
-  if(measureEnabled){ lines.push(`Замер: ${document.getElementById('measureCostRowSummary').textContent}`); }
-  if(deliveryEnabled){ lines.push(`Доставка: ${document.getElementById('deliveryCostRowSummary').textContent}`); }
-  lines.push(`Доп. услуги (демонтаж и ручные): ${document.getElementById('extrasSubtotal').textContent}`);
+  lines.push(`Стоимость изделий: ${formatMoney(t.productsTotal)} ₽`);
+  if(installEnabled){ lines.push(`Монтаж: ${formatMoney(t.installCostTotal * coef)} ₽`); }
+  if(deliveryEnabled){ lines.push(`Доставка: ${formatMoney(t.deliveryCost)} ₽`); }
+  extras.forEach(ex => {
+    const price = parseFloat(ex.price) || 0;
+    if(ex.name && price > 0){ lines.push(`${ex.name}: ${formatMoney(price)} ₽`); }
+  });
   lines.push('');
-  lines.push(`Нужно листов: ${document.getElementById('sheetsNeeded').textContent} · К покупке: ${document.getElementById('sheetsBuy').textContent}`);
-  lines.push(`Площадь: ${document.getElementById('totalArea').textContent} м² (оплачивается ${document.getElementById('paidArea').textContent} м²)`);
-  lines.push(`ИТОГО: ${document.getElementById('totalValue').textContent}`);
+  lines.push(`Площадь: ${document.getElementById('totalArea').textContent} м²`);
+  lines.push(`ИТОГО: ${formatMoney(t.totalCost)} ₽`);
   return lines.join('\n');
 }
 async function copyText(text){
@@ -1022,6 +1021,10 @@ function updateTotals(){
   document.getElementById('measureCostRowSummary').textContent = formatMoney(measureCost) + ' ₽';
   document.getElementById('deliveryCostRowSummary').textContent = formatMoney(deliveryCost) + ' ₽';
   document.getElementById('installCostRowSummary').textContent = formatMoney(installCostTotal) + ' ₽';
+
+  // Стоимость изделий = всё (с наценкой), кроме монтажа, доставки и доп. услуг
+  const productsTotal = (baseCost - installCostTotal) * coef + measureCost + extraMaterialCostVal;
+  window.__calcTotals = { productsTotal, installCostTotal, measureCost, deliveryCost, manualExtrasCost, totalCost };
 }
 
 function onFieldChange(e){
