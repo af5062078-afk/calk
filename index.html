@@ -33,7 +33,7 @@
     color:var(--text);
     font-family:'Inter',sans-serif;
     min-height:100vh;
-    padding-bottom:190px;
+    padding-bottom:130px;
   }
   .veins{ position:fixed; inset:0; z-index:0; opacity:0.05; pointer-events:none; }
   header{
@@ -50,7 +50,9 @@
     font-family:'Fraunces',serif;
     font-weight:600; font-style:italic;
     font-size:clamp(24px, 5.5vw, 30px); margin:0; letter-spacing:-.01em;
-    color:var(--total);
+    background:linear-gradient(135deg, #0f4a42, #1f7a6c 70%, #2f8f9c);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:var(--total);
   }
   header .eyebrow, header h1{
     max-width:var(--page-max); margin-left:auto; margin-right:auto;
@@ -59,16 +61,16 @@
 
   .tabs{
     position:sticky; top:0; z-index:3;
-    display:flex; gap:8px;
-    padding:14px 16px 10px;
+    display:flex; gap:4px;
+    padding:12px 16px 10px;
     max-width:var(--page-max); margin:0 auto;
     background:var(--bg);
   }
   .tab-btn{
     flex:1;
-    background:var(--surface);
-    border:1.5px solid var(--line);
-    border-radius:11px;
+    background:var(--surface-2);
+    border:1px solid transparent;
+    border-radius:12px;
     padding:11px 8px;
     color:var(--text-muted);
     font-family:'Inter',sans-serif;
@@ -76,9 +78,10 @@
     cursor:pointer;
   }
   .tab-btn.active{
-    border-color:var(--total);
+    background:var(--surface);
     color:var(--total);
-    background:var(--accent-soft);
+    border-color:var(--line);
+    box-shadow:0 2px 8px rgba(15,74,66,.10);
   }
   .tab-panel{ display:none; }
   .tab-panel.active{ display:block; animation:panelIn .18s ease; }
@@ -95,10 +98,11 @@
 
   .material-card{
     background:var(--surface);
-    border:1.5px solid var(--total);
-    border-radius:14px;
+    border:1px solid var(--line);
+    border-radius:16px;
     padding:16px;
     margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(15,74,66,.05);
   }
   .material-card .field-row{ margin-bottom:10px; }
   .material-card .field-row:last-child{ margin-bottom:0; }
@@ -106,10 +110,11 @@
   .item{
     background:var(--surface);
     border:1px solid var(--line);
-    border-radius:14px;
+    border-radius:16px;
     padding:16px;
     margin-bottom:14px;
     position:relative;
+    box-shadow:0 1px 3px rgba(15,74,66,.05);
   }
   .item-head{
     display:flex; justify-content:space-between; align-items:center;
@@ -166,18 +171,18 @@
   }
   .field input{
     background:var(--surface-2);
-    border:1.5px solid var(--accent);
-    border-radius:9px;
+    border:1.5px solid transparent;
+    border-radius:11px;
     padding:11px 12px;
     color:var(--text);
     font-family:'JetBrains Mono',monospace;
     font-size:16px;
     font-weight:500;
     width:100%;
-    box-shadow:0 1px 2px rgba(15,74,66,0.08);
+    box-shadow:0 0 0 1px var(--line) inset;
   }
   .field input::placeholder{ color:var(--text-muted); opacity:.7; }
-  .field input:focus{ outline:none; border-color:var(--total); box-shadow:0 0 0 3px var(--accent-soft); }
+  .field input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .field input.warn{
     border-color:var(--danger);
     background:rgba(179,65,60,0.08);
@@ -196,18 +201,33 @@
 
   .add-btn{
     display:block; width:100%;
-    background:transparent;
-    border:1.5px dashed var(--line);
+    background:var(--accent-soft);
+    border:1.5px solid transparent;
     border-radius:14px;
-    color:var(--text-muted);
+    color:var(--accent);
     font-family:'Inter',sans-serif;
-    font-size:14px; font-weight:500;
+    font-size:14px; font-weight:600;
     padding:14px;
     cursor:pointer;
     margin:0 auto 20px;
     max-width:var(--page-max);
   }
-  .add-btn:active{ border-color:var(--accent); color:var(--accent); }
+  .add-btn:active{ background:rgba(31,122,108,.18); }
+
+  .share-row{
+    display:flex; gap:8px;
+    max-width:var(--page-max);
+    margin:0 auto 28px;
+  }
+  .share-mini{
+    flex:1;
+    margin:0;
+    padding:12px;
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    color:var(--text);
+  }
+  .share-mini:active{ border-color:var(--accent); color:var(--accent); background:var(--surface); }
 
   .extra-row{
     display:grid; grid-template-columns:1fr 110px 34px;
@@ -328,7 +348,7 @@
   footer{
     position:fixed; left:0; right:0; bottom:0; z-index:2;
     background:linear-gradient(180deg, transparent, var(--bg) 18%);
-    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    padding:10px 16px calc(12px + env(safe-area-inset-bottom));
   }
   .sheets-strip{
     display:flex; justify-content:space-between;
@@ -340,27 +360,24 @@
   .total-card{
     position:relative;
     overflow:hidden;
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:16px 18px;
+    background:linear-gradient(135deg, #0f4a42, #1f7a6c 65%, #2f8f9c);
+    border:none;
+    border-radius:18px;
+    padding:18px 20px;
     display:flex; justify-content:space-between; align-items:center;
-  }
-  .total-card svg{
-    position:absolute; inset:0; width:100%; height:100%;
-    opacity:.5;
+    box-shadow:0 10px 26px rgba(15,74,66,.28);
   }
   .total-label{
-    position:relative; font-size:12px; color:var(--text-muted);
+    position:relative; font-size:12px; color:rgba(255,255,255,.78);
     font-family:'JetBrains Mono',monospace; letter-spacing:.05em;
   }
   .total-value{
     position:relative;
     font-family:'Fraunces',serif; font-weight:600;
     font-size:clamp(22px, 6vw, 28px);
-    color:var(--total);
+    color:#fff;
   }
-  .total-value span{ font-size:15px; color:var(--accent); margin-left:3px; }
+  .total-value span{ font-size:15px; color:rgba(255,255,255,.8); margin-left:3px; }
 
   .hint{
     font-size:12px; color:var(--text-muted); text-align:center; margin-top:6px;
@@ -370,6 +387,9 @@
   .sheets-strip, .total-card, .hint{
     max-width:var(--page-max); margin-left:auto; margin-right:auto;
   }
+
+  /* --- Убираем служебные строки внизу, оставляем только итог --- */
+  footer .sheets-strip, footer .hint{ display:none; }
 
   /* --- Узкие экраны --- */
   @media (max-width:360px){
@@ -385,7 +405,7 @@
   /* --- Hover-состояния (только устройства с курсором) --- */
   @media (hover:hover) and (pointer:fine){
     .tab-btn:hover{ border-color:var(--accent); color:var(--total); }
-    .add-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+    .add-btn:hover{ background:rgba(31,122,108,.18); color:var(--accent); }
     .remove-btn:hover, .extra-remove:hover{ color:var(--danger); }
     .item-name:hover{ border-bottom-color:var(--accent); }
     .item:hover{ border-color:var(--accent); box-shadow:0 2px 12px rgba(15,74,66,.07); }
@@ -500,7 +520,11 @@
     <div id="extrasList"></div>
   </main>
   <button class="add-btn" id="addExtraBtn">+ Добавить услугу</button>
-  <button class="add-btn" id="shareBtn" style="border-style:solid; margin-bottom:28px;">📤 Поделиться сметой</button>
+  <button class="add-btn" id="shareBtn">📤 Поделиться сметой</button>
+  <div class="share-row">
+    <button class="add-btn share-mini" id="tgShareBtn">✈️ Telegram</button>
+    <button class="add-btn share-mini" id="maxShareBtn">💬 Max</button>
+  </div>
 </div>
 
 <div id="tabPrice" class="tab-panel">
@@ -647,10 +671,6 @@
     <span>К покупке: <b id="sheetsBuy">0</b> (шаг 0,25)</span>
   </div>
   <div class="total-card">
-    <svg viewBox="0 0 300 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,20 C60,40 90,5 150,25 C210,45 240,10 300,30" stroke="#1f7a6c" stroke-width="1" fill="none"/>
-      <path d="M0,65 C70,50 110,80 170,60 C230,42 260,75 300,58" stroke="#2f8f9c" stroke-width="1" fill="none"/>
-    </svg>
     <span class="total-label">Итого по заказу</span>
     <span class="total-value" id="totalValue">0<span>₽</span></span>
   </div>
@@ -780,7 +800,7 @@ document.getElementById('changePinBtn').addEventListener('click', () => {
 });
 
 /* ---------- Поделиться сметой ---------- */
-document.getElementById('shareBtn').addEventListener('click', async () => {
+function buildShareText(){
   const lines = [];
   lines.push('Смета · камень');
   lines.push('');
@@ -801,17 +821,37 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
   lines.push(`Нужно листов: ${document.getElementById('sheetsNeeded').textContent} · К покупке: ${document.getElementById('sheetsBuy').textContent}`);
   lines.push(`Площадь: ${document.getElementById('totalArea').textContent} м² (оплачивается ${document.getElementById('paidArea').textContent} м²)`);
   lines.push(`ИТОГО: ${document.getElementById('totalValue').textContent}`);
-  const text = lines.join('\n');
+  return lines.join('\n');
+}
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(err){
+    return false;
+  }
+}
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  const text = buildShareText();
   if(navigator.share){
     try{ await navigator.share({ title: 'Смета', text }); }catch(err){ /* пользователь отменил */ }
   } else {
-    try{
-      await navigator.clipboard.writeText(text);
-      window.alert('Смета скопирована в буфер обмена');
-    }catch(err){
-      window.alert('Поделиться недоступно в этом браузере');
-    }
+    const ok = await copyText(text);
+    window.alert(ok ? 'Смета скопирована в буфер обмена' : 'Поделиться недоступно в этом браузере');
   }
+});
+document.getElementById('tgShareBtn').addEventListener('click', () => {
+  const text = buildShareText();
+  const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(location.href) + '&text=' + encodeURIComponent(text);
+  window.open(shareUrl, '_blank');
+});
+document.getElementById('maxShareBtn').addEventListener('click', async () => {
+  const text = buildShareText();
+  const ok = await copyText(text);
+  window.open('https://max.ru', '_blank');
+  window.alert(ok
+    ? 'Смета скопирована в буфер.\nОткройте Max, выберите чат и вставьте текст (долгое нажатие → «Вставить»).'
+    : 'Не удалось скопировать автоматически — выделите и скопируйте текст вручную.');
 });
 
 function render(){
