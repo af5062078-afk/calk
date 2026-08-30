@@ -811,7 +811,7 @@ function buildShareText(){
   });
   lines.push('');
   lines.push(`Стоимость изделий: ${formatMoney(t.productsTotal)} ₽`);
-  if(installEnabled){ lines.push(`Монтаж: ${formatMoney(t.installCostTotal * coef)} ₽`); }
+  if(installEnabled){ lines.push(`Монтаж: ${formatMoney(t.installCostMargin)} ₽`); }
   if(deliveryEnabled){ lines.push(`Доставка: ${formatMoney(t.deliveryCost)} ₽`); }
   extras.forEach(ex => {
     const price = parseFloat(ex.price) || 0;
@@ -1024,7 +1024,7 @@ function updateTotals(){
 
   // Стоимость изделий = всё (с наценкой), кроме монтажа, доставки и доп. услуг
   const productsTotal = (baseCost - installCostTotal) * coef + measureCost + extraMaterialCostVal;
-  window.__calcTotals = { productsTotal, installCostTotal, measureCost, deliveryCost, manualExtrasCost, totalCost };
+  window.__calcTotals = { productsTotal, installCostTotal, installCostMargin: installCostTotal * coef, measureCost, deliveryCost, manualExtrasCost, totalCost };
 }
 
 function onFieldChange(e){
