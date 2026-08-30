@@ -441,6 +441,10 @@
   <main>
     <p class="section-label">Материал (расчёт в валюте)</p>
     <div class="material-card">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Название материала (для сметы)</label>
+        <input type="text" inputmode="text" placeholder="Например: Кварц Caesarstone" id="materialNameInput" />
+      </div>
       <div class="field-row-3">
         <div class="field">
           <label>Курс доллара, ₽</label>
@@ -684,6 +688,7 @@ let idCounter = 1;
 let extras = [];
 let extraIdCounter = 1;
 let materialQty = '';
+let materialName = '';
 let usdRate = '90';
 let materialPriceUsd = '235';
 let laborCost = '4000';
@@ -810,6 +815,9 @@ function buildShareText(){
     lines.push(`${idx + 1}. ${it.name}: ${it.length || 0}×${it.width || 0} мм, толщ. ${it.thickness || 0} мм, ${it.qty || 1} шт — ${area} м²`);
   });
   lines.push('');
+  if(materialName && materialName.trim()){
+    lines.push(`Материал: ${materialName.trim()}`);
+  }
   lines.push(`Стоимость изделий: ${formatMoney(t.productsTotal)} ₽`);
   lines.push(measureEnabled ? `Замер: ${formatMoney(t.measureCost)} ₽` : 'Замер — нет');
   lines.push(installEnabled ? `Монтаж: ${formatMoney(t.installCostMargin)} ₽` : 'Монтаж — нет');
@@ -1082,6 +1090,10 @@ document.getElementById('materialQtyInput').addEventListener('input', (e) => {
   updateTotals();
   save();
 });
+document.getElementById('materialNameInput').addEventListener('input', (e) => {
+  materialName = e.target.value;
+  save();
+});
 document.getElementById('usdRateInput').addEventListener('input', (e) => {
   usdRate = e.target.value;
   updateTotals();
@@ -1213,7 +1225,7 @@ async function save(){
   saveInFlight = true;
   while(saveQueued){
     saveQueued = false;
-    const snapshot = JSON.stringify({ items, idCounter, extras, extraIdCounter, materialQty, usdRate, materialPriceUsd, laborCost, installCost, coefficient, sheet, kerf, glueRatio, gluePriceUsd, extraMaterialCost, defaultCapinos, pin, measureRate, deliveryRate, measureEnabled, measureQty, deliveryEnabled, deliveryQty, installEnabled });
+    const snapshot = JSON.stringify({ items, idCounter, extras, extraIdCounter, materialQty, materialName, usdRate, materialPriceUsd, laborCost, installCost, coefficient, sheet, kerf, glueRatio, gluePriceUsd, extraMaterialCost, defaultCapinos, pin, measureRate, deliveryRate, measureEnabled, measureQty, deliveryEnabled, deliveryQty, installEnabled });
     try{
       await storageSet(STORAGE_KEY, snapshot);
     }catch(err){
@@ -1237,6 +1249,7 @@ async function load(){
         if(extras.length === 0){ extras = defaultExtras(); }
         extraIdCounter = parsed.extraIdCounter || (Math.max(...extras.map(x=>x.id)) + 1);
         materialQty = parsed.materialQty || '';
+        materialName = parsed.materialName || '';
         usdRate = parsed.usdRate || '90';
         materialPriceUsd = parsed.materialPriceUsd || '235';
         laborCost = parsed.laborCost || '4000';
@@ -1258,6 +1271,7 @@ async function load(){
         installEnabled = typeof parsed.installEnabled === 'boolean' ? parsed.installEnabled : true;
         document.getElementById('materialQtyInput').value = materialQty;
         syncMaterialQtyWarn();
+        document.getElementById('materialNameInput').value = materialName;
         document.getElementById('usdRateInput').value = usdRate;
         document.getElementById('materialPriceUsdInput').value = materialPriceUsd;
         document.getElementById('laborCostInput').value = laborCost;
@@ -1294,6 +1308,7 @@ async function load(){
   document.getElementById('sheetThickness').value = sheet.thickness;
   document.getElementById('usdRateInput').value = usdRate;
   document.getElementById('materialPriceUsdInput').value = materialPriceUsd;
+  document.getElementById('materialNameInput').value = materialName;
   document.getElementById('laborCostInput').value = laborCost;
   document.getElementById('installCostInput').value = installCost;
   document.getElementById('coefficientInput').value = coefficient;
