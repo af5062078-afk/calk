@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f4f8f7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Калькулятор">
+<title>Калькулятор камня</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f8f7;
+    --surface:#ffffff;
+    --surface-2:#eef5f4;
+    --accent:#1f7a6c;
+    --accent-soft:rgba(31,122,108,0.10);
+    --text:#173934;
+    --text-muted:#6f8b86;
+    --line:#d9e6e3;
+    --total:#0f4a42;
+    --danger:#b3413c;
+    --page-max:680px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:190px;
+  }
+  .veins{ position:fixed; inset:0; z-index:0; opacity:0.05; pointer-events:none; }
+  header{
+    position:relative; z-index:1;
+    padding:28px 20px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 8px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600; font-style:italic;
+    font-size:clamp(24px, 5.5vw, 30px); margin:0; letter-spacing:-.01em;
+    color:var(--total);
+  }
+  header .eyebrow, header h1{
+    max-width:var(--page-max); margin-left:auto; margin-right:auto;
+  }
+  main{ position:relative; z-index:1; padding:18px 16px 8px; max-width:var(--page-max); margin:0 auto; }
+
+  .tabs{
+    position:sticky; top:0; z-index:3;
+    display:flex; gap:8px;
+    padding:14px 16px 10px;
+    max-width:var(--page-max); margin:0 auto;
+    background:var(--bg);
+  }
+  .tab-btn{
+    flex:1;
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:11px;
+    padding:11px 8px;
+    color:var(--text-muted);
+    font-family:'Inter',sans-serif;
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    border-color:var(--total);
+    color:var(--total);
+    background:var(--accent-soft);
+  }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; animation:panelIn .18s ease; }
+  @keyframes panelIn{
+    from{ opacity:0; transform:translateY(4px); }
+    to{ opacity:1; transform:none; }
+  }
+
+  .section-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-muted); margin:0 0 8px 2px;
+  }
+
+  .material-card{
+    background:var(--surface);
+    border:1.5px solid var(--total);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:20px;
+  }
+  .material-card .field-row{ margin-bottom:10px; }
+  .material-card .field-row:last-child{ margin-bottom:0; }
+
+  .item{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .item-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px;
+  }
+  .item-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px; font-weight:600;
+    color:var(--total);
+    background:var(--accent-soft);
+    border-radius:7px;
+    padding:3px 8px;
+    flex-shrink:0;
+    margin-right:8px;
+  }
+  .item-name{
+    font-family:'Fraunces',serif; font-weight:600; font-size:16px;
+    background:transparent; border:none; color:var(--text);
+    padding:0; flex:1 1 auto; min-width:0; margin-right:10px;
+    border-bottom:1px dashed var(--line);
+  }
+  .item-name:focus{ outline:none; border-bottom-color:var(--accent); }
+  .remove-btn{
+    background:none; border:none; color:var(--text-muted);
+    font-size:13px; font-family:'JetBrains Mono',monospace;
+    cursor:pointer; padding:6px 8px; white-space:nowrap; flex-shrink:0;
+  }
+  .remove-btn:active{ color:var(--accent); }
+
+  .tab-btn,.add-btn,.remove-btn,.extra-remove,.lock-btn,.change-pin-btn,
+  .field input,.item-name,.extra-row input,.toggle-qty input,.pin-input,
+  .item,.toggle-card,.material-card,.total-card{
+    transition:border-color .16s ease, color .16s ease, background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  }
+
+  .field-row{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
+  }
+  .field-row-3{
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;
+  }
+  .field-row-3 .field input{ padding:11px 8px; font-size:16px; text-align:center; }
+  .field-row-3 .field label{ font-size:10.5px; }
+  .item-sub{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .item-sub .lbl{ font-size:11px; color:var(--text-muted); }
+  .item-sub .val{ font-size:14px; color:var(--total); font-weight:600; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{
+    font-size:12px; color:var(--text); font-weight:600; letter-spacing:.03em;
+  }
+  .field input{
+    background:var(--surface-2);
+    border:1.5px solid var(--accent);
+    border-radius:9px;
+    padding:11px 12px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    font-weight:500;
+    width:100%;
+    box-shadow:0 1px 2px rgba(15,74,66,0.08);
+  }
+  .field input::placeholder{ color:var(--text-muted); opacity:.7; }
+  .field input:focus{ outline:none; border-color:var(--total); box-shadow:0 0 0 3px var(--accent-soft); }
+  .field input.warn{
+    border-color:var(--danger);
+    background:rgba(179,65,60,0.08);
+    color:var(--danger);
+  }
+  .field input.warn:focus{ box-shadow:0 0 0 3px rgba(179,65,60,0.18); }
+  .field .readout{
+    background:var(--accent-soft);
+    border:1.5px solid transparent;
+    border-radius:9px;
+    padding:11px 12px;
+    color:var(--total);
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px; font-weight:600;
+  }
+
+  .add-btn{
+    display:block; width:100%;
+    background:transparent;
+    border:1.5px dashed var(--line);
+    border-radius:14px;
+    color:var(--text-muted);
+    font-family:'Inter',sans-serif;
+    font-size:14px; font-weight:500;
+    padding:14px;
+    cursor:pointer;
+    margin:0 auto 20px;
+    max-width:var(--page-max);
+  }
+  .add-btn:active{ border-color:var(--accent); color:var(--accent); }
+
+  .extra-row{
+    display:grid; grid-template-columns:1fr 110px 34px;
+    gap:8px; align-items:center;
+    margin-bottom:8px;
+  }
+  .extra-row input[type="text"]{
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:9px;
+    padding:11px 12px;
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:500;
+    width:100%;
+  }
+  .extra-row input[type="text"]:focus{ outline:none; border-color:var(--accent); }
+  .extra-row input[type="number"]{
+    background:var(--surface-2);
+    border:1.5px solid var(--accent);
+    border-radius:9px;
+    padding:11px 10px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px; font-weight:600;
+    width:100%; text-align:right;
+  }
+  .extra-row input[type="number"]:focus{ outline:none; border-color:var(--total); box-shadow:0 0 0 3px var(--accent-soft); }
+  .extra-remove{
+    background:none; border:none; color:var(--text-muted);
+    font-size:18px; cursor:pointer; padding:6px;
+  }
+  .extra-remove:active{ color:var(--accent); }
+
+  .subtotal-strip{
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px; color:var(--text-muted);
+    padding:8px 2px;
+  }
+  .subtotal-strip b{ color:var(--total); font-weight:600; }
+
+  .toggle-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .toggle-check{
+    display:flex; align-items:center; gap:8px;
+    font-family:'Fraunces',serif; font-weight:600; font-size:15px;
+    color:var(--text);
+    flex:1;
+    cursor:pointer;
+  }
+  .toggle-check input[type="checkbox"]{
+    width:20px; height:20px; accent-color:var(--total); cursor:pointer; flex-shrink:0;
+  }
+  .toggle-qty{ width:56px; flex-shrink:0; }
+  .toggle-qty label, .toggle-cost label{
+    font-size:9.5px; color:var(--text-muted); display:block; margin-bottom:4px; text-align:center;
+    text-transform:uppercase; letter-spacing:.03em;
+  }
+  .toggle-qty input{
+    width:100%; text-align:center;
+    background:var(--surface-2); border:1.5px solid var(--accent); border-radius:8px;
+    padding:8px 4px; font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--text);
+  }
+  .toggle-cost{ min-width:92px; flex-shrink:0; }
+  .toggle-cost .readout{
+    padding:8px 10px; font-size:14px; text-align:right; white-space:nowrap;
+  }
+  .toggle-card.disabled .toggle-qty,
+  .toggle-card.disabled .toggle-cost{ opacity:.4; }
+
+  .lock-screen{
+    text-align:center;
+    padding:36px 20px;
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:14px;
+  }
+  .lock-icon{ font-size:30px; margin-bottom:6px; }
+  .lock-title{
+    font-family:'Fraunces',serif; font-weight:600; font-style:italic;
+    font-size:17px; color:var(--total); margin:0 0 14px;
+  }
+  .pin-input{
+    width:150px; text-align:center; letter-spacing:10px; text-indent:10px;
+    font-size:22px; margin:0 auto 14px; display:block;
+    background:var(--surface-2);
+    border:1.5px solid var(--accent);
+    border-radius:10px;
+    padding:12px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .pin-input:focus{ outline:none; border-color:var(--total); box-shadow:0 0 0 3px var(--accent-soft); }
+  .lock-btn{
+    background:var(--total); color:#fff; border:none;
+    border-radius:10px; padding:12px 28px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
+    cursor:pointer;
+  }
+  .lock-error{
+    color:var(--danger); font-size:12px; margin:10px 0 0; min-height:14px;
+  }
+  .change-pin-btn{
+    background:none; border:none; color:var(--text-muted);
+    font-size:12px; text-decoration:underline;
+    cursor:pointer; padding:8px; margin-top:6px;
+  }
+
+  footer{
+    position:fixed; left:0; right:0; bottom:0; z-index:2;
+    background:linear-gradient(180deg, transparent, var(--bg) 18%);
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+  }
+  .sheets-strip{
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px; color:var(--text-muted);
+    padding:0 2px 8px;
+  }
+  .sheets-strip b{ color:var(--total); font-weight:600; }
+  .total-card{
+    position:relative;
+    overflow:hidden;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px 18px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .total-card svg{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:.5;
+  }
+  .total-label{
+    position:relative; font-size:12px; color:var(--text-muted);
+    font-family:'JetBrains Mono',monospace; letter-spacing:.05em;
+  }
+  .total-value{
+    position:relative;
+    font-family:'Fraunces',serif; font-weight:600;
+    font-size:clamp(22px, 6vw, 28px);
+    color:var(--total);
+  }
+  .total-value span{ font-size:15px; color:var(--accent); margin-left:3px; }
+
+  .hint{
+    font-size:12px; color:var(--text-muted); text-align:center; margin-top:6px;
+  }
+
+  /* --- Центрирование фиксированного футера --- */
+  .sheets-strip, .total-card, .hint{
+    max-width:var(--page-max); margin-left:auto; margin-right:auto;
+  }
+
+  /* --- Узкие экраны --- */
+  @media (max-width:360px){
+    header{ padding:22px 14px 14px; }
+    main{ padding-left:12px; padding-right:12px; }
+    .tabs{ padding-left:12px; padding-right:12px; }
+    .item, .material-card{ padding:13px; }
+    .toggle-card{ flex-wrap:wrap; }
+    .toggle-cost{ margin-left:auto; }
+    .extra-row{ grid-template-columns:1fr 84px 32px; }
+  }
+
+  /* --- Hover-состояния (только устройства с курсором) --- */
+  @media (hover:hover) and (pointer:fine){
+    .tab-btn:hover{ border-color:var(--accent); color:var(--total); }
+    .add-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+    .remove-btn:hover, .extra-remove:hover{ color:var(--danger); }
+    .item-name:hover{ border-bottom-color:var(--accent); }
+    .item:hover{ border-color:var(--accent); box-shadow:0 2px 12px rgba(15,74,66,.07); }
+    .toggle-card:not(.disabled):hover{ border-color:var(--accent); }
+    .lock-btn:hover{ background:var(--accent); }
+  }
+
+  /* --- Уважение к настройке «уменьшить анимацию» --- */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="veins" viewBox="0 0 400 800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,120 C80,160 60,260 160,240 C260,220 240,340 340,300" stroke="#1f7a6c" stroke-width="1.2" fill="none"/>
+  <path d="M-20,420 C60,460 120,400 200,460 C280,520 320,460 420,520" stroke="#2f8f9c" stroke-width="1" fill="none"/>
+  <path d="M20,650 C100,680 140,620 240,660 C300,684 340,640 400,670" stroke="#1f7a6c" stroke-width="1" fill="none"/>
+</svg>
+
+<header>
+  <p class="eyebrow">Смета · камень</p>
+  <h1>Калькулятор столешниц</h1>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="order" id="tabBtnOrder">Заказ</button>
+  <button class="tab-btn" data-tab="price" id="tabBtnPrice">🔒 База цен</button>
+</div>
+
+<div id="tabOrder" class="tab-panel active">
+  <main>
+    <p class="section-label">Материал (расчёт в валюте)</p>
+    <div class="material-card">
+      <div class="field-row-3">
+        <div class="field">
+          <label>Курс доллара, ₽</label>
+          <input type="number" inputmode="decimal" placeholder="0" id="usdRateInput" />
+        </div>
+        <div class="field">
+          <label>Цена листа, $</label>
+          <input type="number" inputmode="decimal" placeholder="0" id="materialPriceUsdInput" />
+        </div>
+        <div class="field">
+          <label>Доп. материал</label>
+          <input type="number" inputmode="decimal" placeholder="0" id="materialQtyInput" />
+        </div>
+      </div>
+      <div class="subtotal-strip">
+        <span>Цена листа, по курсу</span><b id="sheetPriceRubReadout">0 ₽</b>
+      </div>
+      <div class="subtotal-strip">
+        <span>Листов к оплате (авторасчёт + доп.)</span><b id="sheetsForCostReadout">0</b>
+      </div>
+      <div class="subtotal-strip" style="border-top:1px dashed var(--line); margin-top:4px; padding-top:10px;">
+        <span>Материал, по курсу</span><b id="materialCostReadoutOrder">0 ₽</b>
+      </div>
+    </div>
+  </main>
+
+  <main style="padding-top:0;">
+    <p class="section-label">Позиции</p>
+    <div id="itemsList"></div>
+  </main>
+  <button class="add-btn" id="addBtn">+ Добавить позицию</button>
+
+  <main style="padding-top:0;">
+    <p class="section-label">Доп. работы и услуги</p>
+
+    <div class="toggle-card" id="measureCard">
+      <label class="toggle-check">
+        <input type="checkbox" id="measureEnabled" checked />
+        <span>Замер</span>
+      </label>
+      <div class="toggle-qty">
+        <label>Кол-во</label>
+        <input type="number" inputmode="decimal" value="1" id="measureQty" />
+      </div>
+      <div class="toggle-cost">
+        <label>Стоимость</label>
+        <div class="readout" id="measureCostReadout">0 ₽</div>
+      </div>
+    </div>
+
+    <div class="toggle-card" id="deliveryCard">
+      <label class="toggle-check">
+        <input type="checkbox" id="deliveryEnabled" checked />
+        <span>Доставка</span>
+      </label>
+      <div class="toggle-qty">
+        <label>Кол-во</label>
+        <input type="number" inputmode="decimal" value="1" id="deliveryQty" />
+      </div>
+      <div class="toggle-cost">
+        <label>Стоимость</label>
+        <div class="readout" id="deliveryCostReadout">0 ₽</div>
+      </div>
+    </div>
+
+    <div class="toggle-card" id="installCard">
+      <label class="toggle-check">
+        <input type="checkbox" id="installEnabled" checked />
+        <span>Монтаж</span>
+      </label>
+      <div class="toggle-cost">
+        <label>Стоимость</label>
+        <div class="readout" id="installCostReadout">0 ₽</div>
+      </div>
+    </div>
+
+    <div id="extrasList"></div>
+  </main>
+  <button class="add-btn" id="addExtraBtn">+ Добавить услугу</button>
+  <button class="add-btn" id="shareBtn" style="border-style:solid; margin-bottom:28px;">📤 Поделиться сметой</button>
+</div>
+
+<div id="tabPrice" class="tab-panel">
+  <main>
+    <div id="lockScreen" class="lock-screen">
+      <div class="lock-icon">🔒</div>
+      <p class="lock-title">Введите PIN</p>
+      <input type="password" inputmode="numeric" maxlength="4" class="pin-input" id="pinInput" placeholder="••••" />
+      <button class="lock-btn" id="pinSubmit">Войти</button>
+      <p class="lock-error" id="pinError"></p>
+    </div>
+
+    <div id="priceContent" style="display:none;">
+      <p class="section-label">Лист материала</p>
+      <div class="material-card">
+        <div class="field-row-3">
+          <div class="field">
+            <label>Длина листа, мм</label>
+            <input type="number" inputmode="decimal" placeholder="3660" id="sheetLength" />
+          </div>
+          <div class="field">
+            <label>Ширина листа, мм</label>
+            <input type="number" inputmode="decimal" placeholder="760" id="sheetWidth" />
+          </div>
+          <div class="field">
+            <label>Толщина, мм</label>
+            <input type="number" inputmode="decimal" placeholder="12" id="sheetThickness" />
+          </div>
+        </div>
+      </div>
+
+      <p class="section-label">Коэффициенты расчёта</p>
+      <div class="material-card">
+        <div class="field">
+          <label>Толщина пропила, мм (запас на рез — добавляется к длине и ширине каждой позиции)</label>
+          <input type="number" inputmode="decimal" placeholder="0" id="kerfInput" />
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label>Расход клея, тюбик/лист</label>
+          <input type="number" inputmode="decimal" placeholder="2" id="glueRatioInput" />
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label>Толщина капиноса по умолчанию, мм (подставляется в новую позицию)</label>
+          <input type="number" inputmode="decimal" placeholder="40" id="defaultCapinosInput" />
+        </div>
+      </div>
+
+      <p class="section-label">База цен</p>
+      <div class="material-card">
+        <div class="field-row">
+          <div class="field">
+            <label>Работа, ₽/м²</label>
+            <input type="number" inputmode="decimal" placeholder="0" id="laborCostInput" />
+          </div>
+          <div class="field">
+            <label>Монтаж, ₽/м²</label>
+            <input type="number" inputmode="decimal" placeholder="0" id="installCostInput" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Клей, $/тюбик</label>
+            <input type="number" inputmode="decimal" placeholder="0" id="gluePriceUsdInput" />
+          </div>
+          <div class="field">
+            <label>Клей, по курсу</label>
+            <div class="readout" id="glueCostReadout">0 ₽</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Замер, ₽/ед.</label>
+            <input type="number" inputmode="decimal" placeholder="0" id="measureRateInput" />
+          </div>
+          <div class="field">
+            <label>Доставка, ₽/ед.</label>
+            <input type="number" inputmode="decimal" placeholder="0" id="deliveryRateInput" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Доп. расходы к материалу, ₽</label>
+            <input type="number" inputmode="decimal" placeholder="0" id="extraMaterialCostInput" />
+          </div>
+          <div class="field">
+            <label>Наценка на них</label>
+            <div class="readout" style="color:var(--text-muted); font-weight:500;">не начисляется</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Коэффициент прибыли</label>
+            <input type="number" inputmode="decimal" step="0.01" placeholder="1.0" id="coefficientInput" />
+          </div>
+          <div class="field">
+            <label>Наценка</label>
+            <div class="readout" id="markupReadout">+0%</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-label">Сводка по текущему заказу</p>
+      <div class="material-card">
+        <div class="subtotal-strip">
+          <span>Материал</span><b id="materialCostRow">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Доп. расходы к материалу (без наценки)</span><b id="extraMaterialCostRow">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Работа</span><b id="laborCostRow">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Клей (с наценкой)</span><b id="glueCostRow">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Монтаж (если включён)</span><b id="installCostRowSummary">0 ₽</b>
+        </div>
+        <div class="subtotal-strip" style="border-top:1px dashed var(--line); margin-top:4px; padding-top:10px;">
+          <span>Итого себестоимость</span><b id="baseCostSubtotal">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Цена продажи (× коэфф.)</span><b id="salePriceSubtotal">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Замер (если включён)</span><b id="measureCostRowSummary">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>Доставка (если включена)</span><b id="deliveryCostRowSummary">0 ₽</b>
+        </div>
+        <div class="subtotal-strip">
+          <span>+ Демонтаж и ручные услуги (без наценки)</span><b id="extrasSubtotal">0 ₽</b>
+        </div>
+      </div>
+
+      <button class="add-btn" id="changePinBtn">Изменить PIN</button>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <div class="sheets-strip">
+    <span>Нужно листов: <b id="sheetsNeeded">0</b></span>
+    <span>К покупке: <b id="sheetsBuy">0</b> (шаг 0,25)</span>
+  </div>
+  <div class="total-card">
+    <svg viewBox="0 0 300 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,20 C60,40 90,5 150,25 C210,45 240,10 300,30" stroke="#1f7a6c" stroke-width="1" fill="none"/>
+      <path d="M0,65 C70,50 110,80 170,60 C230,42 260,75 300,58" stroke="#2f8f9c" stroke-width="1" fill="none"/>
+    </svg>
+    <span class="total-label">Итого по заказу</span>
+    <span class="total-value" id="totalValue">0<span>₽</span></span>
+  </div>
+  <p class="hint" id="hint">Нужно: <span id="totalArea">0,00</span> м² · Оплачивается: <span id="paidArea">0,00</span> м²</p>
+</footer>
+
+<script>
+const STORAGE_KEY = 'stone_calc_items_v2';
+let items = [];
+let idCounter = 1;
+let extras = [];
+let extraIdCounter = 1;
+let materialQty = '';
+let usdRate = '90';
+let materialPriceUsd = '235';
+let laborCost = '4000';
+let installCost = '3500';
+let coefficient = '1.5';
+let measureRate = '4000';
+let deliveryRate = '3500';
+let measureEnabled = true;
+let measureQty = '1';
+let deliveryEnabled = true;
+let deliveryQty = '1';
+let installEnabled = true;
+let sheet = { length: '3660', width: '760', thickness: '12' };
+let kerf = '30';
+let glueRatio = '';
+let gluePriceUsd = '17';
+let extraMaterialCost = '2250';
+let defaultCapinos = '';
+let pin = '1234';
+let unlocked = false;
+
+function blankItem(name){
+  const thicknessDefault = defaultCapinos !== '' ? defaultCapinos : '40';
+  return { id: idCounter++, name: name || ('Позиция ' + idCounter), length: '', width: '', thickness: thicknessDefault, qty: '1' };
+}
+function blankExtra(name){
+  return { id: extraIdCounter++, name: name || 'Услуга', price: '' };
+}
+function defaultExtras(){
+  return [ blankExtra('Демонтаж') ];
+}
+
+function calcAreaM2(l, w){
+  return (parseFloat(l)/1000 || 0) * (parseFloat(w)/1000 || 0);
+}
+function calcItemArea(it){
+  const qty = parseFloat(it.qty) || 0;
+  return calcAreaM2(it.length, it.width) * qty;
+}
+function calcItemAreaKerf(it){
+  const qty = parseFloat(it.qty) || 0;
+  const k = parseFloat(kerf) || 0;
+  const l = (parseFloat(it.length) || 0) + k;
+  const w = (parseFloat(it.width) || 0) + k;
+  const mainArea = calcAreaM2(l, w);
+
+  const capinosThickness = parseFloat(it.thickness) || 0;
+  let capinosArea = 0;
+  if(capinosThickness > 0){
+    const capL = (parseFloat(it.length) || 0) + k;
+    const capW = capinosThickness + k;
+    capinosArea = calcAreaM2(capL, capW);
+  }
+
+  return (mainArea + capinosArea) * qty;
+}
+function sheetAreaM2(){
+  const l = parseFloat(sheet.length) || 0;
+  const w = parseFloat(sheet.width) || 0;
+  return calcAreaM2(l, w);
+}
+function formatMoney(n){
+  return (Math.round(n / 50) * 50).toLocaleString('ru-RU');
+}
+function formatArea(n){
+  return (isFinite(n) ? n : 0).toFixed(2).replace('.', ',');
+}
+function formatSheets(n){
+  return (isFinite(n) ? n : 0).toFixed(2).replace('.', ',');
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.getElementById('tabOrder').classList.toggle('active', tab === 'order');
+    document.getElementById('tabPrice').classList.toggle('active', tab === 'price');
+    if(tab === 'price' && !unlocked){
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinError').textContent = '';
+      setTimeout(() => document.getElementById('pinInput').focus(), 50);
+    }
+  });
+});
+
+/* ---------- PIN lock ---------- */
+function tryUnlock(){
+  const val = document.getElementById('pinInput').value;
+  if(val === pin){
+    unlocked = true;
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('priceContent').style.display = 'block';
+  } else {
+    document.getElementById('pinError').textContent = 'Неверный PIN';
+    document.getElementById('pinInput').value = '';
+  }
+}
+document.getElementById('pinSubmit').addEventListener('click', tryUnlock);
+document.getElementById('pinInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') tryUnlock();
+});
+document.getElementById('changePinBtn').addEventListener('click', () => {
+  const current = window.prompt('Текущий PIN, для подтверждения:');
+  if(current !== pin){
+    if(current !== null) window.alert('Неверный текущий PIN');
+    return;
+  }
+  const next = window.prompt('Новый PIN (4 цифры):');
+  if(!next) return;
+  pin = next;
+  save();
+  window.alert('PIN изменён');
+});
+
+/* ---------- Поделиться сметой ---------- */
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  const lines = [];
+  lines.push('Смета · камень');
+  lines.push('');
+  items.forEach((it, idx) => {
+    const area = formatArea(calcItemArea(it));
+    lines.push(`${idx + 1}. ${it.name}: ${it.length || 0}×${it.width || 0} мм, толщ. ${it.thickness || 0} мм, ${it.qty || 1} шт — ${area} м²`);
+  });
+  lines.push('');
+  lines.push(`Материал: ${document.getElementById('materialCostRow').textContent}`);
+  lines.push(`Доп. расходы к материалу: ${document.getElementById('extraMaterialCostRow').textContent}`);
+  lines.push(`Работа: ${document.getElementById('laborCostRow').textContent}`);
+  lines.push(`Клей (с наценкой): ${document.getElementById('glueCostRow').textContent}`);
+  if(installEnabled){ lines.push(`Монтаж: ${document.getElementById('installCostRowSummary').textContent}`); }
+  if(measureEnabled){ lines.push(`Замер: ${document.getElementById('measureCostRowSummary').textContent}`); }
+  if(deliveryEnabled){ lines.push(`Доставка: ${document.getElementById('deliveryCostRowSummary').textContent}`); }
+  lines.push(`Доп. услуги (демонтаж и ручные): ${document.getElementById('extrasSubtotal').textContent}`);
+  lines.push('');
+  lines.push(`Нужно листов: ${document.getElementById('sheetsNeeded').textContent} · К покупке: ${document.getElementById('sheetsBuy').textContent}`);
+  lines.push(`Площадь: ${document.getElementById('totalArea').textContent} м² (оплачивается ${document.getElementById('paidArea').textContent} м²)`);
+  lines.push(`ИТОГО: ${document.getElementById('totalValue').textContent}`);
+  const text = lines.join('\n');
+  if(navigator.share){
+    try{ await navigator.share({ title: 'Смета', text }); }catch(err){ /* пользователь отменил */ }
+  } else {
+    try{
+      await navigator.clipboard.writeText(text);
+      window.alert('Смета скопирована в буфер обмена');
+    }catch(err){
+      window.alert('Поделиться недоступно в этом браузере');
+    }
+  }
+});
+
+function render(){
+  const list = document.getElementById('itemsList');
+  list.innerHTML = '';
+  items.forEach((it, idx) => {
+    const area = calcItemArea(it);
+    const areaKerf = calcItemAreaKerf(it);
+
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="item-head">
+        <span class="item-num">${idx + 1}</span>
+        <input class="item-name" value="${escapeHtml(it.name)}" data-id="${it.id}" data-field="name" />
+        <button class="remove-btn" data-id="${it.id}">убрать</button>
+      </div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Длина, мм</label>
+          <input type="number" inputmode="decimal" placeholder="0" value="${it.length}" data-id="${it.id}" data-field="length" />
+        </div>
+        <div class="field">
+          <label>Ширина, мм</label>
+          <input type="number" inputmode="decimal" placeholder="0" value="${it.width}" data-id="${it.id}" data-field="width" />
+        </div>
+        <div class="field">
+          <label>Капинос, мм</label>
+          <input type="number" inputmode="decimal" placeholder="0" value="${it.thickness}" data-id="${it.id}" data-field="thickness" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Кол-во, шт</label>
+          <input type="number" inputmode="decimal" placeholder="1" value="${it.qty}" data-id="${it.id}" data-field="qty" />
+        </div>
+        <div class="field">
+          <label>Площадь позиции</label>
+          <div class="readout">${formatArea(area)} м²</div>
+        </div>
+      </div>
+      <div class="item-sub">
+        <span class="lbl">На лист (с капиносом и резом)</span>
+        <span class="val">${formatArea(areaKerf)} м²</span>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  document.querySelectorAll('#itemsList input[data-field]').forEach(inp => {
+    inp.addEventListener('input', onFieldChange);
+  });
+  document.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', onRemove);
+  });
+
+  renderExtras();
+  updateTotals();
+  save();
+}
+
+function renderExtras(){
+  const list = document.getElementById('extrasList');
+  list.innerHTML = '';
+  extras.forEach(ex => {
+    const row = document.createElement('div');
+    row.className = 'extra-row';
+    row.innerHTML = `
+      <input type="text" value="${escapeHtml(ex.name)}" data-extra-id="${ex.id}" data-extra-field="name" placeholder="Название услуги" />
+      <input type="number" inputmode="decimal" placeholder="0" value="${ex.price}" data-extra-id="${ex.id}" data-extra-field="price" />
+      <button class="extra-remove" data-extra-id="${ex.id}">×</button>
+    `;
+    list.appendChild(row);
+  });
+
+  document.querySelectorAll('#extrasList input[data-extra-field]').forEach(inp => {
+    inp.addEventListener('input', onExtraChange);
+  });
+  document.querySelectorAll('.extra-remove').forEach(btn => {
+    btn.addEventListener('click', onExtraRemove);
+  });
+}
+
+function onExtraChange(e){
+  const id = parseInt(e.target.dataset.extraId);
+  const field = e.target.dataset.extraField;
+  const ex = extras.find(x => x.id === id);
+  if(!ex) return;
+  ex[field] = e.target.value;
+  updateTotals();
+  save();
+}
+
+function onExtraRemove(e){
+  const id = parseInt(e.target.dataset.extraId);
+  extras = extras.filter(x => x.id !== id);
+  renderExtras();
+  updateTotals();
+  save();
+}
+
+document.getElementById('addExtraBtn').addEventListener('click', () => {
+  extras.push(blankExtra('Услуга'));
+  renderExtras();
+  updateTotals();
+  save();
+});
+
+function updateTotals(){
+  const totalAreaKerf = items.reduce((s, it) => s + calcItemAreaKerf(it), 0);
+  const sArea = sheetAreaM2();
+
+  let sheetsNeeded = 0;
+  let sheetsBuy = 0;
+  if(sArea > 0){
+    sheetsNeeded = totalAreaKerf / sArea;
+    sheetsBuy = Math.ceil(sheetsNeeded / 0.25) * 0.25;
+  }
+  const paidArea = sheetsBuy * sArea;
+
+  const coef = parseFloat(coefficient) || 1;
+
+  const pricePerSheetRub = (parseFloat(materialPriceUsd) || 0) * (parseFloat(usdRate) || 0);
+  const totalSheetsForCost = sheetsBuy + (parseFloat(materialQty) || 0);
+  const materialCost = totalSheetsForCost * pricePerSheetRub;
+  const extraMaterialCostVal = parseFloat(extraMaterialCost) || 0;
+  const laborCostTotal = totalAreaKerf * (parseFloat(laborCost) || 0);
+  const glueCostPerTubeRub = (parseFloat(gluePriceUsd) || 0) * (parseFloat(usdRate) || 0);
+  const glueTubesTotal = totalSheetsForCost * (parseFloat(glueRatio) || 2);
+  const glueCostTotal = glueTubesTotal * glueCostPerTubeRub;
+
+  const measureCost = measureEnabled ? (parseFloat(measureRate) || 0) * (parseFloat(measureQty) || 0) : 0;
+  const deliveryCost = deliveryEnabled ? (parseFloat(deliveryRate) || 0) * (parseFloat(deliveryQty) || 0) : 0;
+  const installCostRate = parseFloat(installCost) || 0;
+  const installCostTotal = installEnabled
+    ? Math.max(installCostRate * totalAreaKerf, installCostRate) // минимум = ставка «Монтаж» из Базы цен (за 1 м²)
+    : 0;
+
+  const baseCost = materialCost + laborCostTotal + glueCostTotal + installCostTotal;
+  const salePrice = baseCost * coef;
+
+  const manualExtrasCost = extras.reduce((s, ex) => s + (parseFloat(ex.price) || 0), 0);
+  const extrasCost = measureCost + deliveryCost + manualExtrasCost + extraMaterialCostVal;
+
+  const totalCost = salePrice + extrasCost;
+
+  document.getElementById('totalValue').innerHTML = formatMoney(totalCost) + '<span>₽</span>';
+  document.getElementById('totalArea').textContent = formatArea(totalAreaKerf);
+  document.getElementById('paidArea').textContent = formatArea(paidArea);
+  document.getElementById('sheetsNeeded').textContent = formatSheets(sheetsNeeded);
+  document.getElementById('sheetsBuy').textContent = formatSheets(sheetsBuy) + ' л.';
+  document.getElementById('materialCostRow').textContent = formatMoney(materialCost) + ' ₽';
+  document.getElementById('extraMaterialCostRow').textContent = formatMoney(extraMaterialCostVal) + ' ₽';
+  document.getElementById('materialCostReadoutOrder').textContent = formatMoney(materialCost) + ' ₽';
+  document.getElementById('sheetPriceRubReadout').textContent = formatMoney(pricePerSheetRub) + ' ₽';
+  document.getElementById('sheetsForCostReadout').textContent = formatSheets(totalSheetsForCost);
+  document.getElementById('laborCostRow').textContent = formatMoney(laborCostTotal) + ' ₽';
+  document.getElementById('glueCostRow').textContent = formatMoney(glueCostTotal * coef) + ' ₽';
+  document.getElementById('glueCostReadout').textContent = formatMoney(glueCostPerTubeRub) + ' ₽';
+  document.getElementById('baseCostSubtotal').textContent = formatMoney(baseCost) + ' ₽';
+  document.getElementById('salePriceSubtotal').textContent = formatMoney(salePrice) + ' ₽';
+  document.getElementById('extrasSubtotal').textContent = formatMoney(extrasCost) + ' ₽';
+  document.getElementById('markupReadout').textContent = (coef >= 1 ? '+' : '') + Math.round((coef - 1) * 100) + '%';
+
+  document.getElementById('measureCostReadout').textContent = formatMoney(measureCost) + ' ₽';
+  document.getElementById('deliveryCostReadout').textContent = formatMoney(deliveryCost) + ' ₽';
+  document.getElementById('installCostReadout').textContent = formatMoney(installCostTotal * coef) + ' ₽';
+  document.getElementById('measureCostRowSummary').textContent = formatMoney(measureCost) + ' ₽';
+  document.getElementById('deliveryCostRowSummary').textContent = formatMoney(deliveryCost) + ' ₽';
+  document.getElementById('installCostRowSummary').textContent = formatMoney(installCostTotal) + ' ₽';
+}
+
+function onFieldChange(e){
+  const id = parseInt(e.target.dataset.id);
+  const field = e.target.dataset.field;
+  const it = items.find(i => i.id === id);
+  if(!it) return;
+  it[field] = e.target.value;
+  if(field === 'name'){
+    save();
+    return;
+  }
+  render();
+  refocus(id, field);
+}
+
+function refocus(id, field){
+  requestAnimationFrame(() => {
+    const el = document.querySelector(`input[data-id="${id}"][data-field="${field}"]`);
+    if(el){ el.focus(); const v = el.value; el.value=''; el.value=v; }
+  });
+}
+
+function onRemove(e){
+  const id = parseInt(e.target.dataset.id);
+  items = items.filter(i => i.id !== id);
+  if(items.length === 0){ items.push(blankItem('Позиция 1')); }
+  render();
+}
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  items.push(blankItem('Позиция ' + (items.length + 1)));
+  render();
+});
+
+function syncMaterialQtyWarn(){
+  const val = parseFloat(materialQty) || 0;
+  document.getElementById('materialQtyInput').classList.toggle('warn', val > 0);
+}
+
+document.getElementById('materialQtyInput').addEventListener('input', (e) => {
+  materialQty = e.target.value;
+  syncMaterialQtyWarn();
+  updateTotals();
+  save();
+});
+document.getElementById('usdRateInput').addEventListener('input', (e) => {
+  usdRate = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('materialPriceUsdInput').addEventListener('input', (e) => {
+  materialPriceUsd = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('laborCostInput').addEventListener('input', (e) => {
+  laborCost = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('installCostInput').addEventListener('input', (e) => {
+  installCost = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('measureRateInput').addEventListener('input', (e) => {
+  measureRate = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('deliveryRateInput').addEventListener('input', (e) => {
+  deliveryRate = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('coefficientInput').addEventListener('input', (e) => {
+  coefficient = e.target.value;
+  updateTotals();
+  save();
+});
+
+function syncToggleCard(cardId, enabled){
+  document.getElementById(cardId).classList.toggle('disabled', !enabled);
+}
+
+document.getElementById('measureEnabled').addEventListener('change', (e) => {
+  measureEnabled = e.target.checked;
+  syncToggleCard('measureCard', measureEnabled);
+  updateTotals();
+  save();
+});
+document.getElementById('measureQty').addEventListener('input', (e) => {
+  measureQty = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('deliveryEnabled').addEventListener('change', (e) => {
+  deliveryEnabled = e.target.checked;
+  syncToggleCard('deliveryCard', deliveryEnabled);
+  updateTotals();
+  save();
+});
+document.getElementById('deliveryQty').addEventListener('input', (e) => {
+  deliveryQty = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('installEnabled').addEventListener('change', (e) => {
+  installEnabled = e.target.checked;
+  syncToggleCard('installCard', installEnabled);
+  updateTotals();
+  save();
+});
+
+['sheetLength','sheetWidth','sheetThickness'].forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => {
+    const key = id.replace('sheet','').toLowerCase();
+    sheet[key] = e.target.value;
+    updateTotals();
+    save();
+  });
+});
+
+document.getElementById('kerfInput').addEventListener('input', (e) => {
+  kerf = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('glueRatioInput').addEventListener('input', (e) => {
+  glueRatio = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('defaultCapinosInput').addEventListener('input', (e) => {
+  defaultCapinos = e.target.value;
+  save();
+});
+document.getElementById('gluePriceUsdInput').addEventListener('input', (e) => {
+  gluePriceUsd = e.target.value;
+  updateTotals();
+  save();
+});
+document.getElementById('extraMaterialCostInput').addEventListener('input', (e) => {
+  extraMaterialCost = e.target.value;
+  updateTotals();
+  save();
+});
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+let saveInFlight = false;
+let saveQueued = false;
+
+/* ---------- Хранилище: window.storage с fallback на localStorage ---------- */
+const hasNativeStorage = typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+async function storageGet(key){
+  if(hasNativeStorage){
+    try{ return await window.storage.get(key, false); }catch(err){ /* пробуем localStorage */ }
+  }
+  try{ return { value: localStorage.getItem(key) }; }catch(err){ return null; }
+}
+async function storageSet(key, value){
+  if(hasNativeStorage){
+    try{ await window.storage.set(key, value, false); return; }catch(err){ /* пробуем localStorage */ }
+  }
+  try{ localStorage.setItem(key, value); }catch(err){ /* сохранение не удалось — тишина */ }
+}
+
+async function save(){
+  saveQueued = true;
+  if(saveInFlight) return;
+  saveInFlight = true;
+  while(saveQueued){
+    saveQueued = false;
+    const snapshot = JSON.stringify({ items, idCounter, extras, extraIdCounter, materialQty, usdRate, materialPriceUsd, laborCost, installCost, coefficient, sheet, kerf, glueRatio, gluePriceUsd, extraMaterialCost, defaultCapinos, pin, measureRate, deliveryRate, measureEnabled, measureQty, deliveryEnabled, deliveryQty, installEnabled });
+    try{
+      await storageSet(STORAGE_KEY, snapshot);
+    }catch(err){
+      // saving failed silently — will retry on next change
+    }
+  }
+  saveInFlight = false;
+}
+
+async function load(){
+  try{
+    const res = await storageGet(STORAGE_KEY);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      if(parsed.items && parsed.items.length){
+        items = parsed.items;
+        idCounter = parsed.idCounter || (Math.max(...items.map(i=>i.id)) + 1);
+        extras = (parsed.extras && parsed.extras.length) ? parsed.extras : defaultExtras();
+        const legacyNames = ['замер','доставка','монтаж'];
+        extras = extras.filter(ex => !legacyNames.includes((ex.name||'').trim().toLowerCase()));
+        if(extras.length === 0){ extras = defaultExtras(); }
+        extraIdCounter = parsed.extraIdCounter || (Math.max(...extras.map(x=>x.id)) + 1);
+        materialQty = parsed.materialQty || '';
+        usdRate = parsed.usdRate || '90';
+        materialPriceUsd = parsed.materialPriceUsd || '235';
+        laborCost = parsed.laborCost || '4000';
+        installCost = parsed.installCost || '3500';
+        coefficient = parsed.coefficient || '1.5';
+        sheet = parsed.sheet || sheet;
+        kerf = parsed.kerf || '30';
+        glueRatio = parsed.glueRatio || '';
+        defaultCapinos = parsed.defaultCapinos || '';
+        gluePriceUsd = parsed.gluePriceUsd || '17';
+        extraMaterialCost = parsed.extraMaterialCost || '2250';
+        pin = parsed.pin || '1234';
+        measureRate = parsed.measureRate || '4000';
+        deliveryRate = parsed.deliveryRate || '3500';
+        measureEnabled = typeof parsed.measureEnabled === 'boolean' ? parsed.measureEnabled : true;
+        measureQty = parsed.measureQty || '1';
+        deliveryEnabled = typeof parsed.deliveryEnabled === 'boolean' ? parsed.deliveryEnabled : true;
+        deliveryQty = parsed.deliveryQty || '1';
+        installEnabled = typeof parsed.installEnabled === 'boolean' ? parsed.installEnabled : true;
+        document.getElementById('materialQtyInput').value = materialQty;
+        syncMaterialQtyWarn();
+        document.getElementById('usdRateInput').value = usdRate;
+        document.getElementById('materialPriceUsdInput').value = materialPriceUsd;
+        document.getElementById('laborCostInput').value = laborCost;
+        document.getElementById('installCostInput').value = installCost;
+        document.getElementById('coefficientInput').value = coefficient;
+        document.getElementById('measureRateInput').value = measureRate;
+        document.getElementById('deliveryRateInput').value = deliveryRate;
+        document.getElementById('measureEnabled').checked = measureEnabled;
+        document.getElementById('measureQty').value = measureQty;
+        document.getElementById('deliveryEnabled').checked = deliveryEnabled;
+        document.getElementById('deliveryQty').value = deliveryQty;
+        document.getElementById('installEnabled').checked = installEnabled;
+        syncToggleCard('measureCard', measureEnabled);
+        syncToggleCard('deliveryCard', deliveryEnabled);
+        syncToggleCard('installCard', installEnabled);
+        document.getElementById('sheetLength').value = sheet.length || '';
+        document.getElementById('sheetWidth').value = sheet.width || '';
+        document.getElementById('sheetThickness').value = sheet.thickness || '';
+        document.getElementById('kerfInput').value = kerf;
+        document.getElementById('glueRatioInput').value = glueRatio;
+        document.getElementById('defaultCapinosInput').value = defaultCapinos;
+        document.getElementById('gluePriceUsdInput').value = gluePriceUsd;
+        document.getElementById('extraMaterialCostInput').value = extraMaterialCost;
+        render();
+        return;
+      }
+    }
+  }catch(err){
+    // no saved data yet
+  }
+  sheet = { length: '3660', width: '760', thickness: '12' };
+  document.getElementById('sheetLength').value = sheet.length;
+  document.getElementById('sheetWidth').value = sheet.width;
+  document.getElementById('sheetThickness').value = sheet.thickness;
+  document.getElementById('usdRateInput').value = usdRate;
+  document.getElementById('materialPriceUsdInput').value = materialPriceUsd;
+  document.getElementById('laborCostInput').value = laborCost;
+  document.getElementById('installCostInput').value = installCost;
+  document.getElementById('coefficientInput').value = coefficient;
+  document.getElementById('measureRateInput').value = measureRate;
+  document.getElementById('deliveryRateInput').value = deliveryRate;
+  document.getElementById('kerfInput').value = kerf;
+  document.getElementById('glueRatioInput').value = glueRatio;
+  document.getElementById('defaultCapinosInput').value = defaultCapinos;
+  document.getElementById('gluePriceUsdInput').value = gluePriceUsd;
+  document.getElementById('extraMaterialCostInput').value = extraMaterialCost;
+  items = [blankItem('Столешница')];
+  extras = defaultExtras();
+  render();
+}
+
+load();
+</script>
+</body>
+</html>
