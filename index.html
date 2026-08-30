@@ -841,9 +841,18 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
 });
 document.getElementById('tgShareBtn').addEventListener('click', () => {
   const text = buildShareText();
-  // url пустой — Telegram отправит только текст сметы, без ссылки на сайт
-  const shareUrl = 'https://t.me/share/url?url=&text=' + encodeURIComponent(text);
-  window.open(shareUrl, '_blank');
+  // Открываем приложение Telegram напрямую со текстом сметы (без ссылки на сайт)
+  const start = Date.now();
+  window.location.href = 'tg://msg?text=' + encodeURIComponent(text);
+  // Если приложение не открылось (страница осталась видимой) — копируем в буфер
+  setTimeout(async () => {
+    if (document.visibilityState === 'visible' && Date.now() - start < 4000){
+      const ok = await copyText(text);
+      window.alert(ok
+        ? 'Telegram не открылся.\nСмета скопирована в буфер — вставь её в чат Telegram (долгое нажатие → «Вставить»).'
+        : 'Telegram не открылся, и не удалось скопировать текст.');
+    }
+  }, 1500);
 });
 document.getElementById('maxShareBtn').addEventListener('click', async () => {
   const text = buildShareText();
