@@ -841,7 +841,8 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
 });
 document.getElementById('tgShareBtn').addEventListener('click', () => {
   const text = buildShareText();
-  const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(location.href) + '&text=' + encodeURIComponent(text);
+  // url пустой — Telegram отправит только текст сметы, без ссылки на сайт
+  const shareUrl = 'https://t.me/share/url?url=&text=' + encodeURIComponent(text);
   window.open(shareUrl, '_blank');
 });
 document.getElementById('maxShareBtn').addEventListener('click', async () => {
