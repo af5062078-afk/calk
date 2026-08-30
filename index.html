@@ -811,8 +811,9 @@ function buildShareText(){
   });
   lines.push('');
   lines.push(`Стоимость изделий: ${formatMoney(t.productsTotal)} ₽`);
-  if(installEnabled){ lines.push(`Монтаж: ${formatMoney(t.installCostMargin)} ₽`); }
-  if(deliveryEnabled){ lines.push(`Доставка: ${formatMoney(t.deliveryCost)} ₽`); }
+  lines.push(measureEnabled ? `Замер: ${formatMoney(t.measureCost)} ₽` : 'Замер — нет');
+  lines.push(installEnabled ? `Монтаж: ${formatMoney(t.installCostMargin)} ₽` : 'Монтаж — нет');
+  lines.push(deliveryEnabled ? `Доставка: ${formatMoney(t.deliveryCost)} ₽` : 'Доставка — нет');
   extras.forEach(ex => {
     const price = parseFloat(ex.price) || 0;
     if(ex.name && price > 0){ lines.push(`${ex.name}: ${formatMoney(price)} ₽`); }
@@ -1032,8 +1033,8 @@ function updateTotals(){
   document.getElementById('deliveryCostRowSummary').textContent = formatMoney(deliveryCost) + ' ₽';
   document.getElementById('installCostRowSummary').textContent = formatMoney(installCostTotal) + ' ₽';
 
-  // Стоимость изделий = всё (с наценкой), кроме монтажа, доставки и доп. услуг
-  const productsTotal = (baseCost - installCostTotal) * coef + measureCost + extraMaterialCostVal;
+  // Стоимость изделий = всё (с наценкой), кроме замера, монтажа, доставки и доп. услуг
+  const productsTotal = (baseCost - installCostTotal) * coef + extraMaterialCostVal;
   window.__calcTotals = { productsTotal, installCostTotal, installCostMargin: installCostTotal * coef, measureCost, deliveryCost, manualExtrasCost, totalCost };
 }
 
