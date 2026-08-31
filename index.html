@@ -528,6 +528,7 @@
   <div class="share-row">
     <button class="add-btn share-mini" id="tgShareBtn">✈️ Telegram</button>
     <button class="add-btn share-mini" id="maxShareBtn">💬 Max</button>
+    <button class="add-btn share-mini" id="pdfBtn">📄 КП в PDF</button>
   </div>
 </div>
 
@@ -870,6 +871,97 @@ document.getElementById('maxShareBtn').addEventListener('click', async () => {
   window.alert(ok
     ? 'Смета скопирована в буфер.\nОткройте Max, выберите чат и вставьте текст (долгое нажатие → «Вставить»).'
     : 'Не удалось скопировать автоматически — выделите и скопируйте текст вручную.');
+});
+
+/* ---------- Коммерческое предложение (PDF через печать) ---------- */
+function buildKpHtml(){
+  const t = window.__calcTotals || { productsTotal: 0, installCostMargin: 0, measureCost: 0, deliveryCost: 0, totalCost: 0 };
+  const date = new Date().toLocaleDateString('ru-RU');
+  const rows = items.map((it, idx) => `
+      <tr>
+        <td class="c">${idx + 1}</td>
+        <td>${escapeHtml(it.name)}</td>
+        <td class="c">${it.length || 0}×${it.width || 0}</td>
+        <td class="c">${it.thickness || 0}</td>
+        <td class="c">${it.qty || 1}</td>
+        <td class="c">${formatArea(calcItemArea(it))}</td>
+      </tr>`).join('');
+  let services = '';
+  if(measureEnabled){ services += `<tr><td>Замер</td><td class="r">${formatMoney(t.measureCost)} ₽</td></tr>`; }
+  if(installEnabled){ services += `<tr><td>Монтаж</td><td class="r">${formatMoney(t.installCostMargin)} ₽</td></tr>`; }
+  if(deliveryEnabled){ services += `<tr><td>Доставка</td><td class="r">${formatMoney(t.deliveryCost)} ₽</td></tr>`; }
+  extras.forEach(ex => {
+    const price = parseFloat(ex.price) || 0;
+    if(ex.name && price > 0){ services += `<tr><td>${escapeHtml(ex.name)}</td><td class="r">${formatMoney(price)} ₽</td></tr>`; }
+  });
+  const materialLine = (materialName && materialName.trim())
+    ? `<p class="material">Материал: ${escapeHtml(materialName.trim())}</p>`
+    : '';
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Коммерческое предложение</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, 'Segoe UI', sans-serif; color: #173934; margin: 0; }
+  h1 { font-size: 22px; margin: 0 0 2px; color: #0f4a42; }
+  .sub { font-size: 12px; color: #6f8b86; margin: 0 0 16px; }
+  .material { font-size: 14px; font-weight: bold; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { background: #eef5f4; text-align: left; font-size: 12px; padding: 8px; border: 1px solid #d9e6e3; }
+  td { font-size: 13px; padding: 8px; border: 1px solid #d9e6e3; }
+  .c { text-align: center; }
+  .r { text-align: right; white-space: nowrap; }
+  .totals { margin-top: 4px; }
+  .totals td { border: none; border-bottom: 1px solid #eef2f1; padding: 6px 8px; font-size: 13px; }
+  .grand td { border-top: 2px solid #0f4a42; border-bottom: none; font-size: 17px; font-weight: bold; color: #0f4a42; padding-top: 10px; }
+  .note { font-size: 11px; color: #6f8b86; margin-top: 24px; }
+</style>
+</head>
+<body>
+  <h1>Коммерческое предложение</h1>
+  <p class="sub">от ${date}</p>
+  ${materialLine}
+  <table>
+    <thead>
+      <tr><th>№</th><th>Наименование</th><th>Размер, мм</th><th>Толщ., мм</th><th>Кол-во</th><th>Площадь, м²</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <table class="totals">
+    <tr><td>Стоимость изделий</td><td class="r">${formatMoney(t.productsTotal)} ₽</td></tr>
+    ${services}
+    <tr class="grand"><td>ИТОГО</td><td class="r">${formatMoney(t.totalCost)} ₽</td></tr>
+  </table>
+  <p class="note">Цены действительны в течение 14 дней с даты предложения.</p>
+</body>
+</html>`;
+}
+function printKp(){
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(buildKpHtml());
+  doc.close();
+  iframe.contentWindow.addEventListener('afterprint', () => {
+    iframe.remove();
+  });
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  }, 350);
+}
+document.getElementById('pdfBtn').addEventListener('click', () => {
+  printKp();
 });
 
 function render(){
